@@ -27,8 +27,9 @@ import { PATH_DASHBOARD } from '../../routes/paths';
 import useTabs from '../../hooks/useTabs';
 import useSettings from '../../hooks/useSettings';
 import useTable, { getComparator, emptyRows } from '../../hooks/useTable';
-// _mock_
-import { _invoices } from '../../_mock';
+import useAuth from '../../hooks/useAuth';
+import useLocales from '../../hooks/useLocales';
+// middlewares
 import { Service } from '../../middleware';
 // components
 import Page from '../../components/Page';
@@ -43,33 +44,21 @@ import { InvoiceTableRow, InvoiceTableToolbar } from '../../sections/@dashboard/
 
 // ----------------------------------------------------------------------
 
-const SERVICE_OPTIONS = [
-  'all',
-  'full stack development',
-  'backend development',
-  'ui design',
-  'ui/ux design',
-  'front end development',
-];
-
-const TABLE_HEAD = [
-  { id: 'invoiceNumber', label: 'Client', align: 'left' },
-  { id: 'createDate', label: 'Create', align: 'left' },
-  { id: 'dueDate', label: 'Due', align: 'left' },
-  { id: 'price', label: 'Amount', align: 'center', width: 140 },
-  { id: 'sent', label: 'Sent', align: 'center', width: 140 },
-  { id: 'status', label: 'Status', align: 'left' },
-  { id: '' },
-];
-
-// ----------------------------------------------------------------------
-
 export default function InvoiceList() {
   const theme = useTheme();
-
+  const { user } = useAuth();
   const { themeStretch } = useSettings();
+  const { translate } = useLocales();
 
   const navigate = useNavigate();
+
+  const TABLE_HEAD = [
+    { id: 'invoiceNumber', label: translate('app.dashboard.invoices.client'), align: 'left' },
+    { id: 'createdAt', label: translate('app.dashboard.invoices.created'), align: 'left' },
+    { id: 'price', label: translate('app.dashboard.invoices.price'), align: 'center', width: 140 },
+    { id: 'status', label: translate('app.dashboard.invoices.status'), align: 'left' },
+    { id: '' },
+  ];
 
   const {
     dense,
@@ -88,13 +77,13 @@ export default function InvoiceList() {
     onChangeDense,
     onChangePage,
     onChangeRowsPerPage,
-  } = useTable({ defaultOrderBy: 'createDate' });
+  } = useTable({ defaultOrderBy: 'createdAt' });
 
   const [tableData, setTableData] = useState([]);
 
   const [filterName, setFilterName] = useState('');
 
-  const [filterService, setFilterService] = useState('all');
+  // const [filterService, setFilterService] = useState('all');
 
   const [filterStartDate, setFilterStartDate] = useState(null);
 
@@ -104,14 +93,12 @@ export default function InvoiceList() {
 
   useEffect(() => {
     const fetchData = async () => {
-      const res = await Service.getAll()
-        .then((res) => {
-          console.log('res services :>> ', res);
-          setTableData(res);
-        })
-        .catch((err) => {
-          console.log(err);
-        });
+      try {
+        const response = await Service.getBy(`_where[location].id=${user.location.id}&sort=createdAt:DESC`);
+        setTableData(response.data);
+      } catch (error) {
+        throw new Error(error);
+      }
     };
     fetchData();
   }, []);
@@ -121,9 +108,9 @@ export default function InvoiceList() {
     setPage(0);
   };
 
-  const handleFilterService = (event) => {
-    setFilterService(event.target.value);
-  };
+  // const handleFilterService = (event) => {
+  //   setFilterService(event.target.value);
+  // };
 
   const handleDeleteRow = (id) => {
     const deleteRow = tableData.filter((row) => row.id !== id);
@@ -149,7 +136,6 @@ export default function InvoiceList() {
     tableData,
     comparator: getComparator(order, orderBy),
     filterName,
-    filterService,
     filterStatus,
     filterStartDate,
     filterEndDate,
@@ -158,39 +144,58 @@ export default function InvoiceList() {
   const isNotFound =
     (!dataFiltered.length && !!filterName) ||
     (!dataFiltered.length && !!filterStatus) ||
-    (!dataFiltered.length && !!filterService) ||
     (!dataFiltered.length && !!filterEndDate) ||
     (!dataFiltered.length && !!filterStartDate);
 
   const denseHeight = dense ? 56 : 76;
 
-  const getLengthByStatus = (status) => tableData.filter((item) => item.status === status).length;
+  const getLengthByStatus = (status) => tableData.filter((item) => item.attributes.status === status).length;
 
   const getTotalPriceByStatus = (status) =>
     sumBy(
-      tableData.filter((item) => item.status === status),
-      'totalPrice'
+      tableData.filter((item) => item.attributes.status === status),
+      'attributes.serviceCost'
     );
 
   const getPercentByStatus = (status) => (getLengthByStatus(status) / tableData.length) * 100;
 
   const TABS = [
-    { value: 'all', label: 'All', color: 'info', count: tableData.length },
-    { value: 'paid', label: 'Paid', color: 'success', count: getLengthByStatus('paid') },
-    { value: 'unpaid', label: 'Unpaid', color: 'warning', count: getLengthByStatus('unpaid') },
-    { value: 'overdue', label: 'Overdue', color: 'error', count: getLengthByStatus('overdue') },
-    { value: 'draft', label: 'Draft', color: 'default', count: getLengthByStatus('draft') },
+    { value: 'all', label: translate('app.dashboard.invoices.filters.all'), color: 'info', count: tableData.length },
+    {
+      value: 'paid',
+      label: translate('app.dashboard.invoices.filters.paid'),
+      color: 'success',
+      count: getLengthByStatus('paid'),
+    },
+    {
+      value: 'unpaid',
+      label: translate('app.dashboard.invoices.filters.unpaid'),
+      color: 'warning',
+      count: getLengthByStatus('unpaid'),
+    },
+    {
+      value: 'overdue',
+      label: translate('app.dashboard.invoices.filters.overdue'),
+      color: 'error',
+      count: getLengthByStatus('overdue'),
+    },
+    {
+      value: 'draft',
+      label: translate('app.dashboard.invoices.filters.draft'),
+      color: 'default',
+      count: getLengthByStatus('draft'),
+    },
   ];
 
   return (
     <Page title="Invoice: List">
       <Container maxWidth={themeStretch ? false : 'lg'}>
         <HeaderBreadcrumbs
-          heading="Invoice List"
+          heading={translate('app.dashboard.invoices.subtitle')}
           links={[
-            { name: 'Dashboard', href: PATH_DASHBOARD.root },
-            { name: 'Invoices', href: PATH_DASHBOARD.invoice.root },
-            { name: 'List' },
+            { name: translate('app.dashboard.title'), href: PATH_DASHBOARD.root },
+            { name: translate('app.dashboard.invoices.title'), href: PATH_DASHBOARD.invoice.root },
+            { name: translate('app.dashboard.invoices.list') },
           ]}
           action={
             <Button
@@ -199,7 +204,7 @@ export default function InvoiceList() {
               to={PATH_DASHBOARD.invoice.new}
               startIcon={<Iconify icon={'eva:plus-fill'} />}
             >
-              New Invoice
+              {translate('app.dashboard.invoices.create')}
             </Button>
           }
         />
@@ -212,15 +217,15 @@ export default function InvoiceList() {
               sx={{ py: 2 }}
             >
               <InvoiceAnalytic
-                title="Total"
+                title={translate('app.dashboard.invoices.analytics.total')}
                 total={tableData.length}
                 percent={100}
-                price={sumBy(tableData, 'totalPrice')}
+                price={sumBy(tableData, 'attributes.serviceCost')}
                 icon="ic:round-receipt"
                 color={theme.palette.info.main}
               />
               <InvoiceAnalytic
-                title="Paid"
+                title={translate('app.dashboard.invoices.analytics.paid')}
                 total={getLengthByStatus('paid')}
                 percent={getPercentByStatus('paid')}
                 price={getTotalPriceByStatus('paid')}
@@ -228,7 +233,7 @@ export default function InvoiceList() {
                 color={theme.palette.success.main}
               />
               <InvoiceAnalytic
-                title="Unpaid"
+                title={translate('app.dashboard.invoices.analytics.unpaid')}
                 total={getLengthByStatus('unpaid')}
                 percent={getPercentByStatus('unpaid')}
                 price={getTotalPriceByStatus('unpaid')}
@@ -236,7 +241,7 @@ export default function InvoiceList() {
                 color={theme.palette.warning.main}
               />
               <InvoiceAnalytic
-                title="Overdue"
+                title={translate('app.dashboard.invoices.analytics.overdue')}
                 total={getLengthByStatus('overdue')}
                 percent={getPercentByStatus('overdue')}
                 price={getTotalPriceByStatus('overdue')}
@@ -244,7 +249,7 @@ export default function InvoiceList() {
                 color={theme.palette.error.main}
               />
               <InvoiceAnalytic
-                title="Draft"
+                title={translate('app.dashboard.invoices.analytics.draft')}
                 total={getLengthByStatus('draft')}
                 percent={getPercentByStatus('draft')}
                 price={getTotalPriceByStatus('draft')}
@@ -279,18 +284,15 @@ export default function InvoiceList() {
 
           <InvoiceTableToolbar
             filterName={filterName}
-            filterService={filterService}
             filterStartDate={filterStartDate}
             filterEndDate={filterEndDate}
             onFilterName={handleFilterName}
-            onFilterService={handleFilterService}
             onFilterStartDate={(newValue) => {
               setFilterStartDate(newValue);
             }}
             onFilterEndDate={(newValue) => {
               setFilterEndDate(newValue);
             }}
-            optionsService={SERVICE_OPTIONS}
           />
 
           <Scrollbar>
@@ -386,7 +388,7 @@ export default function InvoiceList() {
 
             <FormControlLabel
               control={<Switch checked={dense} onChange={onChangeDense} />}
-              label="Dense"
+              label={translate('app.dashboard.invoices.dense')}
               sx={{ px: 3, py: 1.5, top: 0, position: { md: 'absolute' } }}
             />
           </Box>
@@ -398,15 +400,7 @@ export default function InvoiceList() {
 
 // ----------------------------------------------------------------------
 
-function applySortFilter({
-  tableData,
-  comparator,
-  filterName,
-  filterStatus,
-  filterService,
-  filterStartDate,
-  filterEndDate,
-}) {
+function applySortFilter({ tableData, comparator, filterName, filterStatus, filterStartDate, filterEndDate }) {
   const stabilizedThis = tableData.map((el, index) => [el, index]);
 
   stabilizedThis.sort((a, b) => {
@@ -420,23 +414,25 @@ function applySortFilter({
   if (filterName) {
     tableData = tableData.filter(
       (item) =>
-        item.invoiceNumber.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
-        item.invoiceTo.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
+        item.attributes.consecutive.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+        item.attributes.client.data.attributes.name.toLowerCase().indexOf(filterName.toLowerCase()) !== -1 ||
+        item.attributes.client.data.attributes.phone.toLowerCase().indexOf(filterName.toLowerCase()) !== -1
     );
   }
 
   if (filterStatus !== 'all') {
-    tableData = tableData.filter((item) => item.status === filterStatus);
+    tableData = tableData.filter((item) => item.attributes.status === filterStatus);
   }
 
-  if (filterService !== 'all') {
-    tableData = tableData.filter((item) => item.items.some((c) => c.service === filterService));
-  }
+  // if (filterService !== 'all') {
+  //   tableData = tableData.filter((item) => item.items.some((c) => c.service === filterService));
+  // }
 
   if (filterStartDate && filterEndDate) {
     tableData = tableData.filter(
       (item) =>
-        item.createDate.getTime() >= filterStartDate.getTime() && item.createDate.getTime() <= filterEndDate.getTime()
+        new Date(item.attributes.createdAt).getTime() >= filterStartDate.getTime() &&
+        new Date(item.attributes.createdAt).getTime() <= filterEndDate.getTime()
     );
   }
 

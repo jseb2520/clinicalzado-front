@@ -2,7 +2,7 @@ import PropTypes from 'prop-types';
 import { createContext, useEffect, useReducer } from 'react';
 import { Auth } from '../middleware';
 // utils
-import { isValidToken, setSession } from '../utils/jwt';
+import { setSession } from '../utils/jwt';
 
 // ----------------------------------------------------------------------
 
@@ -75,7 +75,8 @@ function AuthProvider({ children }) {
           setSession(jwt);
 
           const response = await Auth.getMe();
-          const { user } = response;
+          console.log('getMe response :>> ', response);
+          const user = response;
 
           dispatch({
             type: 'INITIALIZE',

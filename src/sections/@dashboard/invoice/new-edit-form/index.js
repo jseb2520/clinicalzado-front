@@ -12,6 +12,8 @@ import { Card, Stack } from '@mui/material';
 import { PATH_DASHBOARD } from '../../../../routes/paths';
 // mock
 import { _invoiceAddressFrom } from '../../../../_mock';
+// hooks
+import useAuth from '../../../../hooks/useAuth';
 // components
 import { FormProvider } from '../../../../components/hook-form';
 //
@@ -24,10 +26,12 @@ import InvoiceNewEditStatusDate from './InvoiceNewEditStatusDate';
 InvoiceNewEditForm.propTypes = {
   isEdit: PropTypes.bool,
   currentInvoice: PropTypes.object,
+  invoiceCount: PropTypes.number,
 };
 
-export default function InvoiceNewEditForm({ isEdit, currentInvoice }) {
+export default function InvoiceNewEditForm({ isEdit, currentInvoice, invoiceCount }) {
   const navigate = useNavigate();
+  const { user } = useAuth();
 
   const [loadingSave, setLoadingSave] = useState(false);
 
@@ -41,12 +45,10 @@ export default function InvoiceNewEditForm({ isEdit, currentInvoice }) {
 
   const defaultValues = useMemo(
     () => ({
-      invoiceNumber: currentInvoice?.invoiceNumber || '17099',
-      createDate: currentInvoice?.createDate || new Date(),
+      consecutive: currentInvoice?.consecutive || '17099',
+      createdAt: currentInvoice?.createdAt || new Date(),
       dueDate: currentInvoice?.dueDate || null,
-      taxes: currentInvoice?.taxes || 0,
       status: currentInvoice?.status || 'draft',
-      discount: currentInvoice?.discount || 0,
       invoiceFrom: currentInvoice?.invoiceFrom || _invoiceAddressFrom[0],
       invoiceTo: currentInvoice?.invoiceTo || null,
       items: currentInvoice?.items || [{ title: '', description: '', service: '', quantity: 1, price: 0, total: 0 }],

@@ -9,6 +9,7 @@ import { PATH_DASHBOARD, PATH_AUTH } from '../../../routes/paths';
 // hooks
 import useAuth from '../../../hooks/useAuth';
 import useIsMountedRef from '../../../hooks/useIsMountedRef';
+import useLocales from '../../../hooks/useLocales';
 // components
 import MyAvatar from '../../../components/MyAvatar';
 import MenuPopover from '../../../components/MenuPopover';
@@ -19,11 +20,7 @@ import { IconButtonAnimate } from '../../../components/animate';
 const MENU_OPTIONS = [
   {
     label: 'Home',
-    linkTo: '/',
-  },
-  {
-    label: 'Profile',
-    linkTo: PATH_DASHBOARD.user.profile,
+    linkTo: PATH_DASHBOARD.invoice.list,
   },
   {
     label: 'Settings',
@@ -37,6 +34,7 @@ export default function AccountPopover() {
   const navigate = useNavigate();
 
   const { user, logout } = useAuth();
+  const {translate} = useLocales();
 
   const isMountedRef = useIsMountedRef();
 
@@ -124,7 +122,7 @@ export default function AccountPopover() {
         <Divider sx={{ borderStyle: 'dashed' }} />
 
         <MenuItem onClick={handleLogout} sx={{ m: 1 }}>
-          Logout
+          {translate('app.dashboard.actions.logout')}
         </MenuItem>
       </MenuPopover>
     </>

@@ -9,12 +9,14 @@ import { PATH_AUTH } from '../../routes/paths';
 // hooks
 import useAuth from '../../hooks/useAuth';
 import useResponsive from '../../hooks/useResponsive';
+import useLocales from '../../hooks/useLocales';
 // components
 import Page from '../../components/Page';
 import Logo from '../../components/Logo';
 import Image from '../../components/Image';
 // sections
 import { LoginForm } from '../../sections/auth/login';
+import ChangeLanguaje from '../../components/ChangeLanguaje';
 
 // ----------------------------------------------------------------------
 
@@ -63,6 +65,7 @@ const ContentStyle = styled('div')(({ theme }) => ({
 
 export default function Login() {
   const { method, isAuthenticated } = useAuth();
+  const { translate } = useLocales();
 
   const smUp = useResponsive('up', 'sm');
 
@@ -79,20 +82,15 @@ export default function Login() {
       <RootStyle>
         <HeaderStyle>
           <Logo />
-          {smUp && (
-            <Typography variant="body2" sx={{ mt: { md: -2 } }}>
-              Don’t have an account? {''}
-              <Link variant="subtitle2" component={RouterLink} to={PATH_AUTH.register}>
-                Get started
-              </Link>
-            </Typography>
-          )}
+          <Box sx={{ ml: 2 }}>
+            <ChangeLanguaje />
+          </Box>
         </HeaderStyle>
 
         {mdUp && (
           <SectionStyle>
             <Typography variant="h3" sx={{ px: 5, mt: 10, mb: 5 }}>
-              Hi, Welcome Back
+              {translate('app.auth.login.greetings')}
             </Typography>
             <Image visibleByDefault disabledEffect src="/assets/illustrations/illustration_login.png" alt="login" />
           </SectionStyle>
@@ -103,9 +101,9 @@ export default function Login() {
             <Stack direction="row" alignItems="center" sx={{ mb: 5 }}>
               <Box sx={{ flexGrow: 1 }}>
                 <Typography variant="h4" gutterBottom>
-                  Sign in to Minimal
+                  {translate('app.auth.login.title')}
                 </Typography>
-                <Typography sx={{ color: 'text.secondary' }}>Enter your details below.</Typography>
+                <Typography sx={{ color: 'text.secondary' }}>{translate('app.auth.login.subtitle')}</Typography>
               </Box>
 
               <Tooltip title={capitalCase(method)} placement="right">
@@ -119,20 +117,8 @@ export default function Login() {
               </Tooltip>
             </Stack>
 
-            <Alert severity="info" sx={{ mb: 3 }}>
-              Use email : <strong>demo@minimals.cc</strong> / password :<strong> demo1234</strong>
-            </Alert>
-
             <LoginForm />
 
-            {!smUp && (
-              <Typography variant="body2" align="center" sx={{ mt: 3 }}>
-                Don’t have an account?{' '}
-                <Link variant="subtitle2" component={RouterLink} to={PATH_AUTH.register}>
-                  Get started
-                </Link>
-              </Typography>
-            )}
           </ContentStyle>
         </Container>
       </RootStyle>

@@ -7,6 +7,8 @@ import { Checkbox, TableRow, TableCell, Typography, Stack, Link, MenuItem } from
 import { fDate } from '../../../../utils/formatTime';
 import createAvatar from '../../../../utils/createAvatar';
 import { fCurrency } from '../../../../utils/formatNumber';
+// hooks
+import useLocales from '../../../../hooks/useLocales';
 // components
 import Label from '../../../../components/Label';
 import Avatar from '../../../../components/Avatar';
@@ -26,8 +28,8 @@ InvoiceTableRow.propTypes = {
 
 export default function InvoiceTableRow({ row, selected, onSelectRow, onViewRow, onEditRow, onDeleteRow }) {
   const theme = useTheme();
-
-  const { sent, invoiceNumber, createDate, dueDate, status, invoiceTo, totalPrice } = row;
+  const {translate} = useLocales();
+  const { consecutive, createdAt, status, client, serviceCost } = row.attributes;
 
   const [openMenu, setOpenMenuActions] = useState(null);
 
@@ -46,30 +48,34 @@ export default function InvoiceTableRow({ row, selected, onSelectRow, onViewRow,
       </TableCell>
 
       <TableCell sx={{ display: 'flex', alignItems: 'center' }}>
-        <Avatar alt={invoiceTo.name} color={createAvatar(invoiceTo.name).color} sx={{ mr: 2 }}>
-          {createAvatar(invoiceTo.name).name}
+        <Avatar
+          alt={client.data.attributes.name}
+          color={createAvatar(client.data.attributes.name).color}
+          sx={{ mr: 2 }}
+        >
+          {createAvatar(client.data.attributes.name).name}
         </Avatar>
 
         <Stack>
           <Typography variant="subtitle2" noWrap>
-            {invoiceTo.name}
+            {client.data.attributes.name}
           </Typography>
 
           <Link noWrap variant="body2" onClick={onViewRow} sx={{ color: 'text.disabled', cursor: 'pointer' }}>
-            {`INV-${invoiceNumber}`}
+            {`INV-${consecutive}`}
           </Link>
         </Stack>
       </TableCell>
 
-      <TableCell align="left">{fDate(createDate)}</TableCell>
+      <TableCell align="left">{fDate(createdAt)}</TableCell>
 
-      <TableCell align="left">{fDate(dueDate)}</TableCell>
+      {/* <TableCell align="left">{fDate(dueDate)}</TableCell> */}
 
-      <TableCell align="center">{fCurrency(totalPrice)}</TableCell>
+      <TableCell align="center">{fCurrency(serviceCost)}</TableCell>
 
-      <TableCell align="center" sx={{ textTransform: 'capitalize' }}>
+      {/* <TableCell align="center" sx={{ textTransform: 'capitalize' }}>
         {sent}
-      </TableCell>
+      </TableCell> */}
 
       <TableCell align="left">
         <Label
@@ -82,7 +88,7 @@ export default function InvoiceTableRow({ row, selected, onSelectRow, onViewRow,
           }
           sx={{ textTransform: 'capitalize' }}
         >
-          {status}
+          {translate(`app.dashboard.invoices.${status}`)}
         </Label>
       </TableCell>
 

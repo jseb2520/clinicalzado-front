@@ -14,9 +14,9 @@ const server = axios.create({
 server.interceptors.request.use(async (request) => {
   try {
     const token = localStorage.getItem('accessToken');
-
+    
     if (token) {
-      request.headers.common.Authorization = `Bearer ${token}`;
+      request.headers.Authorization = `Bearer ${token}`;
     }
     return request;
   } catch (err) {
